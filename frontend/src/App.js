@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import WeatherCard from "./components/WeatherCard";
 import SearchBar from "./components/SearchBar";
+import "./App.css";
 
 function App() {
   const defaultCities = ["London", "New York", "Tokyo"];
