@@ -5,20 +5,43 @@ import SearchBar from "./components/SearchBar";
 import "./App.css";
 
 function App() {
-  const defaultCities = ["London", "New York", "Tokyo"];
-  const [cities, setCities] = useState(defaultCities);
+  const [cities, setCities] = useState([]);
   const [weatherData, setWeatherData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // İlk yüklemede default şehirleri getir
+  
   useEffect(() => {
-    defaultCities.forEach(city => fetchWeather(city));
-  }, []); // Boş dependency array - sadece ilk render'da çalışır
+    loadSavedCities();
+  }, []);
+
+  const loadSavedCities = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/saved-cities");
+      const savedCities = res.data;
+      
+     
+      if (savedCities.length === 0) {
+        const defaultCities = ["London", "New York", "Tokyo"];
+        for (const city of defaultCities) {
+          await axios.post("http://localhost:5000/api/saved-cities", { city });
+        }
+        setCities(defaultCities);
+        defaultCities.forEach(city => fetchWeather(city));
+      } else {
+        setCities(savedCities);
+        savedCities.forEach(city => fetchWeather(city));
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Kayıtlı şehirler yüklenemedi:", err);
+      setLoading(false);
+    }
+  };
 
   const fetchWeather = async (city) => {
     try {
       const res = await axios.get(`http://localhost:5000/api/weather?city=${city}`);
       setWeatherData(prev => {
-        // Aynı şehir tekrar eklenmesin
         if (!prev.some(w => w.city === res.data.city)) {
           return [...prev, res.data];
         }
@@ -29,17 +52,45 @@ function App() {
     }
   };
 
-  const removeCity = (cityName) => {
-    setWeatherData(prev => prev.filter(w => w.city !== cityName));
-    setCities(prev => prev.filter(c => c !== cityName));
-  };
-
-  const addCity = (cityName) => {
-    if (!cities.includes(cityName)) {
-      setCities(prev => [...prev, cityName]);
-      fetchWeather(cityName); // Yeni şehir eklenince hemen fetch et
+  const removeCity = async (cityName) => {
+    try {
+     
+      await axios.delete(`http://localhost:5000/api/saved-cities/${cityName}`);
+      
+     
+      setWeatherData(prev => prev.filter(w => w.city !== cityName));
+      setCities(prev => prev.filter(c => c !== cityName));
+    } catch (err) {
+      console.error("Şehir silinemedi:", err);
     }
   };
+
+  const addCity = async (cityName) => {
+    if (cities.includes(cityName)) {
+      alert("Bu şehir zaten ekli!");
+      return;
+    }
+
+    try {
+      // Veritabanına ekle
+      await axios.post("http://localhost:5000/api/saved-cities", { city: cityName });
+      
+      // State'e ekle
+      setCities(prev => [...prev, cityName]);
+      fetchWeather(cityName);
+    } catch (err) {
+      console.error("Şehir eklenemedi:", err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="App">
+        <h1>Weather App</h1>
+        <p style={{ color: 'white', textAlign: 'center' }}>Yükleniyor...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="App">

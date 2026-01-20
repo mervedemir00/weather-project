@@ -1,15 +1,23 @@
 const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
+const mongoose = require("mongoose");
 require("dotenv").config();
 
+const City = require("./models/City");
+
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
 
-// Mevcut weather endpoint
+// MongoDB bağlantısı
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB bağlantısı başarılı!'))
+  .catch(err => console.error('MongoDB bağlantı hatası:', err));
+
+// Hava durumu endpoint
 app.get("/api/weather", async (req, res) => {
     const city = req.query.city;
     if (!city) return res.status(400).json({ error: "City is required" });
@@ -31,7 +39,7 @@ app.get("/api/weather", async (req, res) => {
     }
 });
 
-// YENİ: City autocomplete endpoint
+// City autocomplete endpoint
 app.get("/api/cities", async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json([]);
@@ -49,6 +57,49 @@ app.get("/api/cities", async (req, res) => {
         res.json(cities);
     } catch (error) {
         res.status(500).json({ error: "Unable to fetch cities" });
+    }
+});
+
+// YENİ: Kayıtlı şehirleri getir
+app.get("/api/saved-cities", async (req, res) => {
+    try {
+        const cities = await City.find().sort({ addedAt: -1 });
+        res.json(cities.map(c => c.name));
+    } catch (error) {
+        res.status(500).json({ error: "Şehirler getirilemedi" });
+    }
+});
+
+// YENİ: Şehir ekle
+app.post("/api/saved-cities", async (req, res) => {
+    const { city } = req.body;
+    if (!city) return res.status(400).json({ error: "City is required" });
+
+    try {
+        // Önce şehir var mı kontrol et
+        const existingCity = await City.findOne({ name: city });
+        if (existingCity) {
+            return res.json({ message: "City already exists", city: existingCity.name });
+        }
+
+        // Yeni şehir ekle
+        const newCity = new City({ name: city });
+        await newCity.save();
+        res.json({ message: "City added", city: newCity.name });
+    } catch (error) {
+        res.status(500).json({ error: "Şehir eklenemedi" });
+    }
+});
+
+// YENİ: Şehir sil
+app.delete("/api/saved-cities/:city", async (req, res) => {
+    const { city } = req.params;
+    
+    try {
+        await City.deleteOne({ name: city });
+        res.json({ message: "City removed" });
+    } catch (error) {
+        res.status(500).json({ error: "Şehir silinemedi" });
     }
 });
 
