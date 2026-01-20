@@ -4,26 +4,22 @@ import WeatherCard from "./components/WeatherCard";
 import SearchBar from "./components/SearchBar";
 import "./App.css";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"; // ← EN ÜSTE EKLE
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 function App() {
   const [cities, setCities] = useState([]);
   const [weatherData, setWeatherData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadSavedCities();
-  }, []);
-
   const loadSavedCities = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/saved-cities`); // ← DEĞİŞTİ
+      const res = await axios.get(`${API_URL}/api/saved-cities`);
       const savedCities = res.data;
       
       if (savedCities.length === 0) {
         const defaultCities = ["London", "New York", "Tokyo"];
         for (const city of defaultCities) {
-          await axios.post(`${API_URL}/api/saved-cities`, { city }); // ← DEĞİŞTİ
+          await axios.post(`${API_URL}/api/saved-cities`, { city });
         }
         setCities(defaultCities);
         defaultCities.forEach(city => fetchWeather(city));
@@ -33,14 +29,14 @@ function App() {
       }
       setLoading(false);
     } catch (err) {
-      console.error("Kayıtlı şehirler yüklenemedi:", err);
+      console.error("Unable to load saved cities:", err);
       setLoading(false);
     }
   };
 
   const fetchWeather = async (city) => {
     try {
-      const res = await axios.get(`${API_URL}/api/weather?city=${city}`); // ← DEĞİŞTİ
+      const res = await axios.get(`${API_URL}/api/weather?city=${city}`);
       setWeatherData(prev => {
         if (!prev.some(w => w.city === res.data.city)) {
           return [...prev, res.data];
@@ -48,34 +44,39 @@ function App() {
         return prev;
       });
     } catch (err) {
-      console.error("Hava durumu getirilemedi:", err);
+      console.error("Unable to fetch weather:", err);
     }
   };
 
+  useEffect(() => {
+    loadSavedCities();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const removeCity = async (cityName) => {
     try {
-      await axios.delete(`${API_URL}/api/saved-cities/${cityName}`); // ← DEĞİŞTİ
+      await axios.delete(`${API_URL}/api/saved-cities/${cityName}`);
       
       setWeatherData(prev => prev.filter(w => w.city !== cityName));
       setCities(prev => prev.filter(c => c !== cityName));
     } catch (err) {
-      console.error("Şehir silinemedi:", err);
+      console.error("Unable to remove city:", err);
     }
   };
 
   const addCity = async (cityName) => {
     if (cities.includes(cityName)) {
-      alert("Bu şehir zaten ekli!");
+      alert("This city is already added!");
       return;
     }
 
     try {
-      await axios.post(`${API_URL}/api/saved-cities`, { city: cityName }); // ← DEĞİŞTİ
+      await axios.post(`${API_URL}/api/saved-cities`, { city: cityName });
       
       setCities(prev => [...prev, cityName]);
       fetchWeather(cityName);
     } catch (err) {
-      console.error("Şehir eklenemedi:", err);
+      console.error("Unable to add city:", err);
     }
   };
 
@@ -83,7 +84,7 @@ function App() {
     return (
       <div className="App">
         <h1>Weather App</h1>
-        <p style={{ color: 'white', textAlign: 'center' }}>Yükleniyor...</p>
+        <p style={{ color: 'white', textAlign: 'center' }}>Loading...</p>
       </div>
     );
   }
