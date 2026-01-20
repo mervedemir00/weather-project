@@ -9,12 +9,19 @@ const City = require("./models/City");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'https://your-netlify-site.netlify.app'
+  ],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
-
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('MongoDB connected succesfully!'))
+  .then(() => console.log('MongoDB connected successfully!'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 app.get("/api/weather", async (req, res) => {
@@ -63,7 +70,7 @@ app.get("/api/saved-cities", async (req, res) => {
         const cities = await City.find().sort({ addedAt: -1 });
         res.json(cities.map(c => c.name));
     } catch (error) {
-        res.status(500).json({ error: "cities could not be brought" });
+        res.status(500).json({ error: "Unable to fetch cities" });
     }
 });
 
@@ -81,7 +88,7 @@ app.post("/api/saved-cities", async (req, res) => {
         await newCity.save();
         res.json({ message: "City added", city: newCity.name });
     } catch (error) {
-        res.status(500).json({ error: "City could not added" });
+        res.status(500).json({ error: "Unable to add city" });
     }
 });
 
@@ -92,7 +99,7 @@ app.delete("/api/saved-cities/:city", async (req, res) => {
         await City.deleteOne({ name: city });
         res.json({ message: "City removed" });
     } catch (error) {
-        res.status(500).json({ error: "City could not removed" });
+        res.status(500).json({ error: "Unable to remove city" });
     }
 });
 
