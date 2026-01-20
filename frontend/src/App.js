@@ -4,26 +4,26 @@ import WeatherCard from "./components/WeatherCard";
 import SearchBar from "./components/SearchBar";
 import "./App.css";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"; // ← EN ÜSTE EKLE
+
 function App() {
   const [cities, setCities] = useState([]);
   const [weatherData, setWeatherData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  
   useEffect(() => {
     loadSavedCities();
   }, []);
 
   const loadSavedCities = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/saved-cities");
+      const res = await axios.get(`${API_URL}/api/saved-cities`); // ← DEĞİŞTİ
       const savedCities = res.data;
       
-     
       if (savedCities.length === 0) {
         const defaultCities = ["London", "New York", "Tokyo"];
         for (const city of defaultCities) {
-          await axios.post("http://localhost:5000/api/saved-cities", { city });
+          await axios.post(`${API_URL}/api/saved-cities`, { city }); // ← DEĞİŞTİ
         }
         setCities(defaultCities);
         defaultCities.forEach(city => fetchWeather(city));
@@ -40,7 +40,7 @@ function App() {
 
   const fetchWeather = async (city) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/weather?city=${city}`);
+      const res = await axios.get(`${API_URL}/api/weather?city=${city}`); // ← DEĞİŞTİ
       setWeatherData(prev => {
         if (!prev.some(w => w.city === res.data.city)) {
           return [...prev, res.data];
@@ -54,10 +54,8 @@ function App() {
 
   const removeCity = async (cityName) => {
     try {
-     
-      await axios.delete(`http://localhost:5000/api/saved-cities/${cityName}`);
+      await axios.delete(`${API_URL}/api/saved-cities/${cityName}`); // ← DEĞİŞTİ
       
-     
       setWeatherData(prev => prev.filter(w => w.city !== cityName));
       setCities(prev => prev.filter(c => c !== cityName));
     } catch (err) {
@@ -72,10 +70,8 @@ function App() {
     }
 
     try {
-      // Veritabanına ekle
-      await axios.post("http://localhost:5000/api/saved-cities", { city: cityName });
+      await axios.post(`${API_URL}/api/saved-cities`, { city: cityName }); // ← DEĞİŞTİ
       
-      // State'e ekle
       setCities(prev => [...prev, cityName]);
       fetchWeather(cityName);
     } catch (err) {

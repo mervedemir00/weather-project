@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000"; // ← EN ÜSTE EKLE
+
 function SearchBar({ onSearch }) {
   const [input, setInput] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -10,7 +12,7 @@ function SearchBar({ onSearch }) {
     if (input.trim().length > 0) {
       const timer = setTimeout(() => {
         fetchCities(input);
-      }, 300); // 300ms debounce
+      }, 300);
       return () => clearTimeout(timer);
     } else {
       setSuggestions([]);
@@ -20,7 +22,7 @@ function SearchBar({ onSearch }) {
 
   const fetchCities = async (query) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/cities?q=${query}`);
+      const res = await axios.get(`${API_URL}/api/cities?q=${query}`); // ← DEĞİŞTİ
       setSuggestions(res.data);
       setShowSuggestions(true);
     } catch (err) {
