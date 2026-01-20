@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 const corsOptions = {
   origin: [
     'http://localhost:3000',
-    'https://your-netlify-site.netlify.app'
+    'https://weather-project-backend.onrender.com'
   ],
   credentials: true
 };
