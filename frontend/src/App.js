@@ -10,10 +10,17 @@ function App() {
   const [cities, setCities] = useState([]);
   const [weatherData, setWeatherData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMessage, setLoadingMessage] = useState("Loading...");
 
   const loadSavedCities = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/saved-cities`);
+      setLoadingMessage("Connecting to server...");
+      
+      const res = await axios.get(`${API_URL}/api/saved-cities`, {
+        timeout: 60000
+      });
+      
+      setLoadingMessage("Loading cities...");
       const savedCities = res.data;
       
       if (savedCities.length === 0) {
@@ -22,15 +29,25 @@ function App() {
           await axios.post(`${API_URL}/api/saved-cities`, { city });
         }
         setCities(defaultCities);
+        setLoadingMessage("Fetching weather data...");
         defaultCities.forEach(city => fetchWeather(city));
       } else {
         setCities(savedCities);
+        setLoadingMessage("Fetching weather data...");
         savedCities.forEach(city => fetchWeather(city));
       }
-      setLoading(false);
+      
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
+      
     } catch (err) {
       console.error("Unable to load saved cities:", err);
-      setLoading(false);
+      setLoadingMessage("Server is waking up, please wait...");
+      
+      setTimeout(() => {
+        loadSavedCities();
+      }, 3000);
     }
   };
 
@@ -83,8 +100,11 @@ function App() {
   if (loading) {
     return (
       <div className="App">
-        <h1>Weather App</h1>
-        <p style={{ color: 'white', textAlign: 'center' }}>Loading...</p>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <h2>{loadingMessage}</h2>
+          <p>The server may take up to 60 seconds to wake up...</p>
+        </div>
       </div>
     );
   }
